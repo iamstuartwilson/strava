@@ -1,28 +1,35 @@
 <?php
 
 	/**
-	* PHP Library for the Strava v3 API
-	* 
+	* Simple PHP Library for the Strava v3 API
+	* @author Stuart Wilson <stuart@iamstuartwilson.com>
+	* @since 17/02/2014
 	*/
 
 	class StravaApi{
 
-		public $clientId;
-		public $clientSecret;
-		public $baseUrl = 'https://www.strava.com/';
-		public $apiUrl;
-		public $authUrl;
-		public $lastRequest;
-		public $lastPostRequest;
+		/**
+		 * Sets up the class with the $clientId and $clientSecret
+		 * @param int $clientId
+		 * @param string $clientSecret
+		 */
 
 		public function __construct( $clientId, $clientSecret ){
 
 			$this->clientId = $clientId;
 			$this->clientSecret = $clientSecret;
+			$this->baseUrl = 'https://www.strava.com/';
 			$this->apiUrl = $this->baseUrl . 'api/v3/';
 			$this->authUrl = $this->baseUrl . 'oauth/';
 
 		}
+
+		/**
+		 * Appends query array onto URL
+		 * @param string $url
+		 * @param array $query
+		 * @return string
+		 */
 
 		protected function parseGet( $url, $query ){
 
@@ -32,27 +39,52 @@
 
 		}
 
+		/**
+		 * Parses JSON as PHP object
+		 * @param string $response
+		 * @return object
+		 */
+
 		protected function parseResponse( $response ){
 
 			return json_decode( $response );
 
 		}
 
-		protected function request( $url, $parameters = array() ){
+		/**
+		 * Makes HTTP Request to the API
+		 * @param string $url
+		 * @param array $parameters
+		 * @return mixed
+		 */
+
+		protected function request( $url, $parameters = array(), $put = false ){
 
 			$this->lastRequest = $url;
+			$this->lastRequestData = $parameters;
 			$curl = curl_init( $url );
 			$curlOptions = array(
 				CURLOPT_SSL_VERIFYPEER	=> false,
 				CURLOPT_FOLLOWLOCATION 	=> true,
 				CURLOPT_REFERER 		=> $url,
-				CURLOPT_RETURNTRANSFER 	=> true,
+				CURLOPT_RETURNTRANSFER 	=> true
 			);
 
 			if( ! empty( $parameters ) ){
 
-				$this->lastPostRequest = $parameters;
-				$curlOptions[ CURLOPT_POST ] = true;
+				if( $put ){
+
+					$curlOptions[ CURLOPT_CUSTOMREQUEST ] = 'PUT';
+					$parameters = http_build_query( $parameters );
+
+				}
+
+				else{
+
+					$curlOptions[ CURLOPT_POST ] = true;
+
+				}
+
 				$curlOptions[ CURLOPT_POSTFIELDS ] = $parameters;
 
 			}
@@ -60,6 +92,7 @@
 			curl_setopt_array( $curl, $curlOptions );
 	        $response = curl_exec( $curl );
 	        $error = curl_error( $curl );
+	        $this->lastRequestInfo = curl_getinfo( $curl );
 	        curl_close( $curl );
 
 	       	if( ! $response ){
@@ -76,6 +109,15 @@
 
 		}
 
+		/**
+		 * Creates authentication URL for your app
+		 * @param string $redirect
+		 * @param string $approvalPrompt
+		 * @param string $scope
+		 * @param string $state
+		 * @return string
+		 */
+
 		public function authenticationUrl( $redirect, $approvalPrompt = 'auto', $scope = null, $state = null ){
 
 			$parameters = array(
@@ -91,6 +133,12 @@
 
 		}
 
+		/**
+		 * Authenticates token returned from API
+		 * @param string $code
+		 * @return function
+		 */
+
 		public function tokenExchange( $code ){
 
 			$parameters = array(
@@ -103,68 +151,29 @@
 
 		}
 
-		//ATHLETE METHODS
+		/**
+		 * Sends GET request to specified API endpoint
+		 * @param string $request
+		 * @param string $accessToken
+		 * @param array $parameters
+		 * @return function
+		 */
 
-		//http://strava.github.io/api/v3/athlete/#get-another-details +
-		//http://strava.github.io/api/v3/athlete/#get-details
-		public function getAthlete( $accessToken, $athleteId = null ){
+		public function get( $request, $accessToken, $parameters = array() ){
 
-			$parameters = array(
-				'access_token'	=> $accessToken
-			);
+			$parameters = array_merge( $parameters, array( 'access_token' => $accessToken ) );
 
-			$url = $this->apiUrl . 'athlete';
-			if( ! empty( $athleteId ) ) $url .= 's/' . $athleteId;
-
-			$requestUrl = $this->parseGet( $url, $parameters );
-
-			return $this->request( $requestUrl );
-
-		}
-
-		//Generic user/athlete detail method
-		protected function getUsers( $userType, $accessToken, $athleteId, $page, $perPage ){
-
-			$parameters = array(
-				'access_token'	=> $accessToken,
-				'page'			=> $page,
-				'per_page'		=> $perPage
-			);
-
-			$url = $this->apiUrl . 'athlete';
-			if( ! empty( $athleteId ) ) $url .= 's/' . $athleteId;
-
-			$requestUrl = $this->parseGet( $url . '/' . $userType, $parameters );
+			$requestUrl = $this->parseGet( $this->apiUrl . $request, $parameters );
 
 			return $this->request( $requestUrl );
 
 		}
 
-		//http://strava.github.io/api/v3/follow/#friends
-		public function getFriends( $accessToken, $athleteId = null, $page = 1, $perPage = 30 ){
+		public function set( $request, $accessToken, $parameters = array() ){
 
-			return $this->getUsers( 'friends', $accessToken, $athleteId, $page, $perPage );
+			$parameters = array_merge( $parameters, array( 'access_token' => $accessToken ) );
 
-		}
-
-		//http://strava.github.io/api/v3/follow/#followers
-		public function getFollowers( $accessToken, $athleteId = null, $page = 1, $perPage = 30 ){
-
-			return $this->getUsers( 'followers', $accessToken, $athleteId, $page, $perPage );
-
-		}
-
-		//http://strava.github.io/api/v3/follow/#both
-		public function getBothFollowing( $accessToken, $athleteId, $page = 1, $perPage = 30 ){
-
-			return $this->getUsers( 'both-following', $accessToken, $athleteId, $page, $perPage );
-
-		}
-
-		//http://strava.github.io/api/v3/athlete/#koms
-		public function getKoms( $accessToken, $athleteId, $page = 1, $perPage = 30 ){
-
-			return $this->getUsers( 'koms', $accessToken, $athleteId, $page, $perPage );
+			return $this->request( $this->apiUrl . $request, $parameters, true );
 
 		}
 
