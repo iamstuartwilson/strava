@@ -3,7 +3,8 @@
 	/**
 	* Simple PHP Library for the Strava v3 API
 	* @author Stuart Wilson <stuart@iamstuartwilson.com>
-	* @since 17/02/2014
+	* @link https://github.com/iamstuartwilson/strava
+	* @since 18/02/2014
 	*/
 
 	class StravaApi{
@@ -58,7 +59,7 @@
 		 * @return mixed
 		 */
 
-		protected function request( $url, $parameters = array(), $put = false ){
+		protected function request( $url, $parameters = array(), $request = false ){
 
 			$this->lastRequest = $url;
 			$this->lastRequestData = $parameters;
@@ -70,11 +71,11 @@
 				CURLOPT_RETURNTRANSFER 	=> true
 			);
 
-			if( ! empty( $parameters ) ){
+			if( ! empty( $parameters ) || ! empty( $request ) ){
 
-				if( $put ){
+				if( ! empty( $request ) ){
 
-					$curlOptions[ CURLOPT_CUSTOMREQUEST ] = 'PUT';
+					$curlOptions[ CURLOPT_CUSTOMREQUEST ] = $request;
 					$parameters = http_build_query( $parameters );
 
 				}
@@ -115,6 +116,7 @@
 		 * @param string $approvalPrompt
 		 * @param string $scope
 		 * @param string $state
+		 * @link http://strava.github.io/api/v3/oauth/#get-authorize
 		 * @return string
 		 */
 
@@ -136,6 +138,7 @@
 		/**
 		 * Authenticates token returned from API
 		 * @param string $code
+		 * @link http://strava.github.io/api/v3/oauth/#post-token
 		 * @return function
 		 */
 
@@ -152,29 +155,90 @@
 		}
 
 		/**
+		 * Deauthorises application
+		 * @param string $accessToken
+		 * @link http://strava.github.io/api/v3/oauth/#deauthorize
+		 * @return function
+		 */
+
+		public function deauthorize( $accessToken ){
+
+			$parameters = array(
+				'access_token'	=> $accessToken
+			);
+
+			return $this->request( $this->authUrl . 'deauthorize', $parameters );
+
+		}
+
+		/**
 		 * Sends GET request to specified API endpoint
 		 * @param string $request
 		 * @param string $accessToken
 		 * @param array $parameters
+		 * @example http://strava.github.io/api/v3/athlete/#koms
 		 * @return function
 		 */
 
 		public function get( $request, $accessToken, $parameters = array() ){
 
 			$parameters = array_merge( $parameters, array( 'access_token' => $accessToken ) );
-
 			$requestUrl = $this->parseGet( $this->apiUrl . $request, $parameters );
 
 			return $this->request( $requestUrl );
 
 		}
 
-		public function set( $request, $accessToken, $parameters = array() ){
+		/**
+		 * Sends PUT request to specified API endpoint
+		 * @param string $request
+		 * @param string $accessToken
+		 * @param array $parameters
+		 * @example http://strava.github.io/api/v3/athlete/#update
+		 * @return function
+		 */
+
+		public function put( $request, $accessToken, $parameters = array() ){
 
 			$parameters = array_merge( $parameters, array( 'access_token' => $accessToken ) );
 
-			return $this->request( $this->apiUrl . $request, $parameters, true );
+			return $this->request( $this->apiUrl . $request, $parameters, 'PUT' );
+
+		}
+
+		/**
+		 * Sends POST request to specified API endpoint
+		 * @param string $request
+		 * @param string $accessToken
+		 * @param array $parameters
+		 * @example http://strava.github.io/api/v3/activities/#create
+		 * @return function
+		 */
+
+		public function post( $request, $accessToken, $parameters = array() ){
+
+			$parameters = array_merge( $parameters, array( 'access_token' => $accessToken ) );
+
+			return $this->request( $this->apiUrl . $request, $parameters );
+
+		}
+
+		/**
+		 * Sends DELETE request to specified API endpoint
+		 * @param string $request
+		 * @param string $accessToken
+		 * @param array $parameters
+		 * @example http://strava.github.io/api/v3/activities/#delete
+		 * @return function
+		 */
+
+		public function delete( $request, $accessToken, $parameters = array() ){
+
+			$parameters = array_merge( $parameters, array( 'access_token' => $accessToken ) );
+
+			return $this->request( $this->apiUrl . $request, $parameters, 'DELETE' );
 
 		}
 
 	}
+	
