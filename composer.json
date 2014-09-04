@@ -1,0 +1,14 @@
+{
+    "name": "iamstuartwilson/strava",
+    "description": "Simple PHP Library for the Strava v3 API",
+    "homepage": "https://github.com/iamstuartwilson/strava",
+    "autoload": {
+        "classmap": [
+            "StravaApi.php"
+        ]
+    },
+    "require":{
+        "php":">=5.3"
+    },
+    "minimum-stability":"dev"
+}
