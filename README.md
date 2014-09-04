@@ -12,12 +12,31 @@ Please read the [API documentation](http://strava.github.io/api/) to see what en
 
 There is currently no file upload support at this time
 
+Installation
+------------
+
+### With Composer
+
+Add `iamstuartwilson/strava` to your `composer.json`:
+
+``` json
+{
+    "require" : {
+        "iamstuartwilson/strava" : "dev-master"
+    }
+}
+```
+
+### Manually
+
+Copy `StravaApi.php` to your project and *require* it in your application as described in the next section.
+
 Getting Started
 ------------
 
 Include the class and instantiate with your **client_id** and **client_secret** from your [registered app](http://www.strava.com/developers):
 
-	require( 'StravaApi.php' );
+	require_once 'StravaApi.php';
 
 	$api = new StravaApi( $clientId, $clientSecret );
 
