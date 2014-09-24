@@ -1,5 +1,7 @@
 <?php
 
+namespace Strava;
+
 	/**
 	* Simple PHP Library for the Strava v3 API
 	* @author Stuart Wilson <stuart@iamstuartwilson.com>

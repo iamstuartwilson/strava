@@ -3,9 +3,9 @@
     "description": "Simple PHP Library for the Strava v3 API",
     "homepage": "https://github.com/iamstuartwilson/strava",
     "autoload": {
-        "classmap": [
-            "StravaApi.php"
-        ]
+        "psr-4": {
+            "Strava\\": "src/Strava"
+        }
     },
     "require":{
         "php":">=5.3"
