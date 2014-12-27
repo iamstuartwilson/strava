@@ -33,7 +33,7 @@ Add `iamstuartwilson/strava` to your `composer.json`:
 ``` json
 {
     "require" : {
-        "iamstuartwilson/strava" : "1.0.*"
+        "iamstuartwilson/strava" : "~1.0"
     }
 }
 ```
