@@ -1,14 +1,13 @@
 {
     "name": "iamstuartwilson/strava",
-    "description": "Simple PHP Library for the Strava v3 API",
-    "homepage": "https://github.com/iamstuartwilson/strava",
-    "autoload": {
-        "classmap": [
-            "StravaApi.php"
-        ]
-    },
-    "require":{
-        "php":">=5.3"
-    },
-    "minimum-stability":"dev"
+    "description": "PHP implementation of the Strava V3 API",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Stuart Wilson",
+            "email": "bonjour@iamstuartwilson.com"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require": {}
 }
