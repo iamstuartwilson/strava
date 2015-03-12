@@ -9,7 +9,9 @@
         }
     ],
     "minimum-stability": "dev",
-    "require": {},
+    "require": {
+        "php": "~5.5"
+    },
     "autoload": {
         "psr-0" : {
             "Iamstuartwilson" : "src"

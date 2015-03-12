@@ -1,0 +1,8 @@
+language: php
+
+php: 5.5
+
+install:
+  - travis_retry composer install --no-interaction
+
+script: exit 0
