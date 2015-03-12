@@ -3,16 +3,25 @@ StravaApi
 
 Simple PHP class to interact with Strava's V3 API.
 
+[![Build Status](https://travis-ci.org/iamstuartwilson/strava.svg)](https://travis-ci.org/iamstuartwilson/strava)
+![Minimum PHP Version](http://img.shields.io/badge/php-~5.5-8892BF.svg?style=flat)
+![Packagist](https://img.shields.io/packagist/v/iamstuartwilson/strava.svg)
+![Packagist Downloads](https://img.shields.io/packagist/dt/iamstuartwilson/strava.svg)
+
 VERSION BUMP
 -------
 
-Latest version **1.0**
+Latest version **1.0.1**
 
-Updates include:
+**Updates include:**
 
 - Better composer support
 - PSR 2 standards
 - New `setAccessToken()` method
+
+**Fixes:**
+
+Case sensitivity with `src/Iamstuartwilson` directory
 
 Overview
 ------------
@@ -21,12 +30,18 @@ The class simply houses methods to help send data to and recieve data from the A
 
 Please read the [API documentation](http://strava.github.io/api/) to see what endpoints are available.
 
-There is currently no file upload support at this time
+*There is currently no file upload support at this time*
 
 Installation
 ------------
 
 ### With Composer
+
+```
+$ composer require iamstuartwilson/strava
+```
+
+**Or**
 
 Add `iamstuartwilson/strava` to your `composer.json`:
 
@@ -47,39 +62,64 @@ Getting Started
 
 Include the class and instantiate with your **client_id** and **client_secret** from your [registered app](http://www.strava.com/developers):
 
-	require_once 'StravaApi.php';
+``` php
+require_once 'StravaApi.php';
 
-	$api = new Iamstuartwilson\StravaApi(
-        $clientId,
-        $clientSecret
-    );
+$api = new Iamstuartwilson\StravaApi(
+    $clientId,
+    $clientSecret
+);
+```
 
 You will then need to [authenticate](http://strava.github.io/api/v3/oauth/) your strava account by requesting an access code *[1]*.  You can generate a URL for authentication using the following method:
 
-	$api->authenticationUrl($redirect, $approvalPrompt = 'auto', $scope = null, $state = null);
+``` php
+$api->authenticationUrl($redirect, $approvalPrompt = 'auto', $scope = null, $state = null);
+```
 
 When a code is returned you must then exchange it for an [access token](http://strava.github.io/api/v3/oauth/#post-token) for the authenticated user:
 
-	$api->tokenExchange($code);
+``` php
+$api->tokenExchange($code);
+```
+
+Before making any requests you must set the access token as returned from your token exchange or via your own private token from Strava:
+
+``` php
+$api->setAccessToken($accessToken);
+```
 
 Example Requests
 ------------
 
 Get the most recent 100 KOMs from any athlete
 
-	$api->get('athletes/:id/koms', array('per_page' => 100));
+``` php
+$api->get('athletes/:id/koms', ['per_page' => 100]);
+```
 
 Post a new activity *[2]*
 
-	$api->post('activities', array('name' => 'API Test', 'type' => 'Ride', 'start_date_local' => date( 'Y-m-d\TH:i:s\Z'), 'elapsed_time' => 3600));
+``` php
+$api->post('activities', [
+    'name'             => 'API Test',
+    'type'             => 'Ride',
+    'start_date_local' => date( 'Y-m-d\TH:i:s\Z'),
+    'elapsed_time'     => 3600
+]);
+```
 
 Update a athlete's weight *[2]*
 
-	$api->put('athlete', array('weight' => 70));
+``` php
+$api->put('athlete', ['weight' => 70]);
+```
 
 Delete an activity *[2]*
 
-	$api->delete('activities/:id');
+``` php
+$api->delete('activities/:id');
+```
 
 ###Notes
 
