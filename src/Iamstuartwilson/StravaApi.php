@@ -134,9 +134,12 @@
                 'redirect_uri'    => $redirect,
                 'response_type'   => 'code',
                 'approval_prompt' => $approvalPrompt,
-                'scope'           => $scope,
                 'state'           => $state,
             );
+
+            if (! is_null($scope)) {
+                $parameters['scope'] = $scope;
+            }
 
             return $this->parseGet(
                 $this->authUrl . 'authorize',
