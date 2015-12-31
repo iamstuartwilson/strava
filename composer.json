@@ -9,8 +9,10 @@
         }
     ],
     "minimum-stability": "dev",
+    "prefer-stable": true,
     "require": {
         "php": "~5.5"
+        "php": ">=5.5"
     },
     "autoload": {
         "psr-0" : {
