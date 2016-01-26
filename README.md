@@ -11,19 +11,11 @@ Simple PHP class to interact with Strava's V3 API.
 VERSION BUMP
 -------
 
-Latest version **1.0.3**
-
-*Apologies to those who had to refactor code after the 1.0.2 release.  My mystake not following semantic versioning!*
+Latest version **1.1.0**
 
 **Updates include:**
 
-- Better composer support
-- PSR 2 standards
-- New `setAccessToken()` method
-
-**Fixes:**
-
-Case sensitivity with `src/Iamstuartwilson` directory
+- Using default `Exception` class for CURL errors
 
 Overview
 ------------
