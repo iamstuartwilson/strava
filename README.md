@@ -4,18 +4,19 @@ StravaApi
 Simple PHP class to interact with Strava's V3 API.
 
 [![Build Status](https://travis-ci.org/iamstuartwilson/strava.svg)](https://travis-ci.org/iamstuartwilson/strava)
-![Minimum PHP Version](http://img.shields.io/badge/php-~5.5-8892BF.svg?style=flat)
+![Minimum PHP Version](http://img.shields.io/badge/php->=5.5-8892BF.svg?style=flat)
 ![Packagist](https://img.shields.io/packagist/v/iamstuartwilson/strava.svg)
 ![Packagist Downloads](https://img.shields.io/packagist/dt/iamstuartwilson/strava.svg)
 
 VERSION BUMP
 -------
 
-Latest version **1.1.0**
+Latest version **1.1.1**
 
 **Updates include:**
 
-- Using default `Exception` class for CURL errors
+- PHP 7 compatibility
+- Basic PHPUnit test cases for Auth URL generation
 
 Overview
 ------------
@@ -42,7 +43,7 @@ Add `iamstuartwilson/strava` to your `composer.json`:
 ``` json
 {
     "require" : {
-        "iamstuartwilson/strava" : "~1.0"
+        "iamstuartwilson/strava" : "~1.1"
     }
 }
 ```
