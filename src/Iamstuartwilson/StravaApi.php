@@ -109,7 +109,7 @@
             curl_close($curl);
 
             if (! $response) {
-                throw new Exception($error);
+                throw new \Exception($error);
             } else {
                 return $this->parseResponse($response);
             }
