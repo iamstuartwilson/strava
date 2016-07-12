@@ -18,6 +18,23 @@
         public $lastRequestData;
         public $lastRequestInfo;
 
+        /**
+         * Stores the HTTP headers from the last API response, e. g.:
+         *
+         * [
+         *     'Cache-Control'     => 'max-age=0, private, must-revalidate',
+         *     'X-RateLimit-Limit' => '600,30000',
+         *     'X-RateLimit-Usage' => '4,25',
+         *     'Content-Length'    => '2031',
+         *     ...
+         * ]
+         *
+         * Access with the `getResponseHeader()` or `getResponseHeaders()` methods.
+         *
+         * @var array
+         */
+        protected $responseHeaders = array();
+
         protected $apiUrl;
         protected $authUrl;
         protected $clientId;
@@ -33,10 +50,34 @@
          */
         public function __construct($clientId = 1, $clientSecret = '')
         {
-            $this->clientId = $clientId;
+            $this->clientId     = $clientId;
             $this->clientSecret = $clientSecret;
-            $this->apiUrl = self::BASE_URL . 'api/v3/';
-            $this->authUrl = self::BASE_URL . 'oauth/';
+            $this->apiUrl       = self::BASE_URL . 'api/v3/';
+            $this->authUrl      = self::BASE_URL . 'oauth/';
+        }
+
+        /**
+         * Returns the complete list of response headers.
+         *
+         * @return array
+         */
+        public function getResponseHeaders()
+        {
+            return $this->responseHeaders;
+        }
+
+        /**
+         * @param string $header
+         *
+         * @return string
+         */
+        public function getResponseHeader($header)
+        {
+            if (! isset($this->responseHeaders[$header])) {
+                throw new \InvalidArgumentException('Header does not exist');
+            }
+
+            return $this->responseHeaders[$header];
         }
 
         /**
@@ -70,14 +111,17 @@
          * Makes HTTP Request to the API
          *
          * @param string $url
-         * @param array  $parameters
+         * @param array $parameters
+         * @param bool|string $request the request method, default is POST
          *
          * @return mixed
+         * @throws \Exception
          */
         protected function request($url, $parameters = array(), $request = false)
         {
             $this->lastRequest = $url;
             $this->lastRequestData = $parameters;
+            $this->responseHeaders = array();
 
             $curl = curl_init($url);
 
@@ -86,6 +130,7 @@
                 CURLOPT_FOLLOWLOCATION => true,
                 CURLOPT_REFERER        => $url,
                 CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_HEADERFUNCTION => array($this, 'parseHeader'),
             );
 
             if (! empty($parameters) || ! empty($request)) {
@@ -102,17 +147,17 @@
             curl_setopt_array($curl, $curlOptions);
 
             $response = curl_exec($curl);
-            $error = curl_error($curl);
+            $error    = curl_error($curl);
 
             $this->lastRequestInfo = curl_getinfo($curl);
 
             curl_close($curl);
 
-            if (! $response) {
+            if (! empty($error)) {
                 throw new \Exception($error);
-            } else {
-                return $this->parseResponse($response);
             }
+
+            return $this->parseResponse($response);
         }
 
         /**
@@ -189,6 +234,8 @@
          * Sets the access token used to authenticate API requests
          *
          * @param string $token
+         *
+         * @return string
          */
         public function setAccessToken($token)
         {
@@ -283,5 +330,40 @@
                 $parameters,
                 array( 'access_token' => $this->accessToken )
             );
+        }
+
+        /**
+         * Parses the header lines into the $responseHeaders attribute
+         *
+         * Skips the first header line (HTTP response status) and the last header
+         * line (empty).
+         *
+         * @param resource $curl
+         * @param string $headerLine
+         *
+         * @return int length of the currently parsed header line in bytes
+         */
+        protected function parseHeader($curl, $headerLine)
+        {
+            $size    = strlen($headerLine);
+            $trimmed = trim($headerLine);
+
+            // skip empty line(s)
+            if (empty($trimmed)) {
+                return $size;
+            }
+
+            // skip first header line (HTTP status code)
+            if (strpos($trimmed, 'HTTP/') === 0) {
+                return $size;
+            }
+
+            $parts = explode(':', $headerLine);
+            $key   = array_shift($parts);
+            $value = implode(":", $parts);
+
+            $this->responseHeaders[$key] = trim($value);
+
+            return $size;
         }
     }
