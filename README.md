@@ -11,10 +11,11 @@ Simple PHP class to interact with Strava's V3 API.
 VERSION BUMP
 -------
 
-Latest version **1.1.1**
+Latest version **1.2.0**
 
 **Updates include:**
 
+- Possibility to access the HTTP response headers
 - PHP 7 compatibility
 - Basic PHPUnit test cases for Auth URL generation
 
@@ -43,7 +44,7 @@ Add `iamstuartwilson/strava` to your `composer.json`:
 ``` json
 {
     "require" : {
-        "iamstuartwilson/strava" : "~1.1"
+        "iamstuartwilson/strava" : "~1.2"
     }
 }
 ```
