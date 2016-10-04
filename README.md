@@ -11,7 +11,7 @@ Simple PHP class to interact with Strava's V3 API.
 VERSION BUMP
 -------
 
-Latest version **1.2.0**
+Latest version **1.2.1**
 
 **Updates include:**
 

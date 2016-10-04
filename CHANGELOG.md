@@ -3,6 +3,12 @@
 All notable changes to `iamstuartwilson/strava` will be documented in this file.
 Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) principles.
 
+## [1.2.1] - 2016-10-04
+
+### Changed
+
+* `CURLOPT_FOLLOWLOCATION` is no longer set to `true`
+
 ## [1.2.0] - 2016-07-12
 
 ### Added
