@@ -11,13 +11,9 @@ Simple PHP class to interact with Strava's V3 API.
 VERSION BUMP
 -------
 
-Latest version **1.2.2**
+Latest version **1.3.0**
 
-**Updates include:**
-
-- Possibility to access the HTTP response headers
-- PHP 7 compatibility
-- Basic PHPUnit test cases for Auth URL generation
+- Adds possibility to use absolute URL for an endpoint to work with [new webhook functionality](http://strava.github.io/api/partner/v3/events/)
 
 Overview
 ------------
@@ -44,7 +40,7 @@ Add `iamstuartwilson/strava` to your `composer.json`:
 ``` json
 {
     "require" : {
-        "iamstuartwilson/strava" : "~1.2"
+        "iamstuartwilson/strava" : "~1.3"
     }
 }
 ```
@@ -122,3 +118,16 @@ $api->delete('activities/:id');
 **1**. The account you register your app will give you an access token, so you can skip this step if you're just testing endpoints/methods.
 
 **2**. These actions will need the **scope** set to *write* when authenticating a user
+
+---
+
+Historic Releases
+---
+
+Previous version **1.2.2**
+
+**Updates include:**
+
+- Possibility to access the HTTP response headers
+- PHP 7 compatibility
+- Basic PHPUnit test cases for Auth URL generation
