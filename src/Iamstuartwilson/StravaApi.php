@@ -254,7 +254,7 @@
         public function get($request, $parameters = array())
         {
             $parameters = $this->generateParameters($parameters);
-            $requestUrl = $this->parseGet($this->apiUrl . $request, $parameters);
+            $requestUrl = $this->parseGet($this->getAbsoluteUrl($request), $parameters);
 
             return $this->request($requestUrl);
         }
@@ -272,7 +272,7 @@
         public function put($request, $parameters = array())
         {
             return $this->request(
-                $this->apiUrl . $request,
+                $this->getAbsoluteUrl($request),
                 $this->generateParameters($parameters),
                 'PUT'
             );
@@ -290,9 +290,8 @@
          */
         public function post($request, $parameters = array())
         {
-
             return $this->request(
-                $this->apiUrl . $request,
+                $this->getAbsoluteUrl($request),
                 $this->generateParameters($parameters)
             );
         }
@@ -310,7 +309,7 @@
         public function delete($request, $parameters = array())
         {
             return $this->request(
-                $this->apiUrl . $request,
+                $this->getAbsoluteUrl($request),
                 $this->generateParameters($parameters),
                 'DELETE'
             );
@@ -359,10 +358,29 @@
 
             $parts = explode(':', $headerLine);
             $key   = array_shift($parts);
-            $value = implode(":", $parts);
+            $value = implode(':', $parts);
 
             $this->responseHeaders[$key] = trim($value);
 
             return $size;
+        }
+
+        /**
+         * Checks the given request string and returns the absolute URL to make
+         * the necessary API call
+         *
+         * @param string $request
+         *
+         * @return string
+         */
+        protected function getAbsoluteUrl($request)
+        {
+            $request = ltrim($request);
+
+            if (strpos($request, 'http') === 0) {
+                return $request;
+            }
+
+            return $this->apiUrl . $request;
         }
     }
