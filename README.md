@@ -113,7 +113,7 @@ Delete an activity *[2]*
 $api->delete('activities/:id');
 ```
 
-###Notes
+### Notes
 
 **1**. The account you register your app will give you an access token, so you can skip this step if you're just testing endpoints/methods.
 
