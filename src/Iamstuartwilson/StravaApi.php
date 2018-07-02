@@ -126,7 +126,7 @@
             $curl = curl_init($url);
 
             $curlOptions = array(
-                CURLOPT_SSL_VERIFYPEER => false,
+                CURLOPT_SSL_VERIFYPEER => true,
                 CURLOPT_REFERER        => $url,
                 CURLOPT_RETURNTRANSFER => true,
                 CURLOPT_HEADERFUNCTION => array($this, 'parseHeader'),
