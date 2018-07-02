@@ -41,6 +41,7 @@ class StravaApi
     protected $clientSecret;
 
     private $accessToken;
+    private $CURL_verify_peer = true;
 
     /**
      * Sets up the class with the $clientId and $clientSecret
@@ -160,7 +161,7 @@ class StravaApi
      * @return mixed
      * @throws \Exception
      */
-    protected function request($url, $parameters = array(), $request = false, $verifypeer = true)
+    protected function request($url, $parameters = array(), $request = false)
     {
         $this->lastRequest = $url;
         $this->lastRequestData = $parameters;
@@ -169,7 +170,7 @@ class StravaApi
         $curl = curl_init($url);
 
         $curlOptions = array(
-            CURLOPT_SSL_VERIFYPEER => $verifypeer,
+            CURLOPT_SSL_VERIFYPEER => $this->CURL_verify_peer,
             CURLOPT_REFERER => $url,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_HEADERFUNCTION => array($this, 'parseHeader'),
@@ -194,7 +195,8 @@ class StravaApi
         if ($error === 'SSL certificate problem: self signed certificate in certificate chain') {
 //            echo 'New attempt without certificate verification.<br />';
             curl_close($curl);
-            return $this->request($url, $parameters, $request, false);
+            $this->CURL_verify_peer = false;
+            return $this->request($url, $parameters, $request);
         }
 
         $this->lastRequestInfo = curl_getinfo($curl);
