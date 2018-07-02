@@ -1,15 +1,10 @@
-StravaApi
-=============
-
-Simple PHP class to interact with Strava's V3 API.
-
 [![Build Status](https://travis-ci.org/iamstuartwilson/strava.svg)](https://travis-ci.org/iamstuartwilson/strava)
 ![Minimum PHP Version](http://img.shields.io/badge/php->=5.5-8892BF.svg?style=flat)
 ![Packagist](https://img.shields.io/packagist/v/iamstuartwilson/strava.svg)
 ![Packagist Downloads](https://img.shields.io/packagist/dt/iamstuartwilson/strava.svg)
 
-Overview
-------------
+StravaApi
+=============
 
 The class simply houses methods to help send data to and recieve data from the API. Please read the [API documentation](https://developers.strava.com/docs/reference/) to see what endpoints are available.
 
