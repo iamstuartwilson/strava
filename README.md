@@ -8,19 +8,10 @@ Simple PHP class to interact with Strava's V3 API.
 ![Packagist](https://img.shields.io/packagist/v/iamstuartwilson/strava.svg)
 ![Packagist Downloads](https://img.shields.io/packagist/dt/iamstuartwilson/strava.svg)
 
-VERSION BUMP
--------
-
-Latest version **1.3.0**
-
-- Adds possibility to use absolute URL for an endpoint to work with [new webhook functionality](http://strava.github.io/api/partner/v3/events/)
-
 Overview
 ------------
 
-The class simply houses methods to help send data to and recieve data from the API.
-
-Please read the [API documentation](http://strava.github.io/api/) to see what endpoints are available.
+The class simply houses methods to help send data to and recieve data from the API. Please read the [API documentation](https://developers.strava.com/docs/reference/) to see what endpoints are available.
 
 *There is currently no file upload support at this time*
 
@@ -52,7 +43,7 @@ Copy `StravaApi.php` to your project and *require* it in your application as des
 Getting Started
 ------------
 
-Include the class and instantiate with your **client_id** and **client_secret** from your [registered app](http://www.strava.com/developers):
+Include the class and instantiate with your **client_id** and **client_secret** from your [registered app](https://www.strava.com/settings/api):
 
 ``` php
 require_once 'StravaApi.php';
@@ -63,7 +54,7 @@ $api = new Iamstuartwilson\StravaApi(
 );
 ```
 
-You will then need to [authenticate](http://strava.github.io/api/v3/oauth/) your strava account by requesting an access code *[1]*.  You can generate a URL for authentication using the following method:
+You will then need to [authenticate](http://strava.github.io/api/v3/oauth/) your strava account by requesting an access code<sup>1</sup>.  You can generate a URL for authentication using the following method:
 
 ``` php
 $api->authenticationUrl($redirect, $approvalPrompt = 'auto', $scope = null, $state = null);
@@ -90,7 +81,7 @@ Get the most recent 100 KOMs from any athlete
 $api->get('athletes/:id/koms', ['per_page' => 100]);
 ```
 
-Post a new activity *[2]*
+Post a new activity<sup>2</sup>
 
 ``` php
 $api->post('activities', [
@@ -101,13 +92,13 @@ $api->post('activities', [
 ]);
 ```
 
-Update a athlete's weight *[2]*
+Update a athlete's weight<sup>2</sup>
 
 ``` php
 $api->put('athlete', ['weight' => 70]);
 ```
 
-Delete an activity *[2]*
+Delete an activity<sup>2</sup>
 
 ``` php
 $api->delete('activities/:id');
@@ -121,12 +112,13 @@ $api->delete('activities/:id');
 
 ---
 
-Historic Releases
+Releases
 ---
+Latest version **1.3.0**
+
+- Adds possibility to use absolute URL for an endpoint to work with new [webhook functionality](https://developers.strava.com/docs/webhooks/).
 
 Previous version **1.2.2**
-
-**Updates include:**
 
 - Possibility to access the HTTP response headers
 - PHP 7 compatibility
