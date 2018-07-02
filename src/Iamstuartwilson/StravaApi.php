@@ -192,18 +192,16 @@ class StravaApi
         $response = curl_exec($curl);
         $error = curl_error($curl);
 
-        if ($error === 'SSL certificate problem: self signed certificate in certificate chain') {
-//            echo 'New attempt without certificate verification.<br />';
-            curl_close($curl);
-            $this->CURL_verify_peer = false;
-            return $this->request($url, $parameters, $request);
-        }
-
         $this->lastRequestInfo = curl_getinfo($curl);
 
         curl_close($curl);
 
         if (!empty($error)) {
+            if ($this->CURL_verify_peer === true){
+                $this->CURL_verify_peer = false;
+                return $this->request($url, $parameters, $request);
+            }
+
             throw new \Exception($error);
         }
 
