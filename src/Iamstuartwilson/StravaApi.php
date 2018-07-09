@@ -1,386 +1,392 @@
 <?php
 
-    namespace Iamstuartwilson;
+namespace Iamstuartwilson;
+
+/**
+ * Simple PHP Library for the Strava v3 API
+ *
+ * @author Stuart Wilson <bonjour@iamstuartwilson.com>
+ *
+ * @link https://github.com/iamstuartwilson/strava
+ */
+
+class StravaApi
+{
+    const BASE_URL = 'https://www.strava.com/';
+
+    public $lastRequest;
+    public $lastRequestData;
+    public $lastRequestInfo;
 
     /**
-     * Simple PHP Library for the Strava v3 API
+     * Stores the HTTP headers from the last API response, e. g.:
      *
-     * @author Stuart Wilson <bonjour@iamstuartwilson.com>
+     * [
+     *     'Cache-Control'     => 'max-age=0, private, must-revalidate',
+     *     'X-RateLimit-Limit' => '600,30000',
+     *     'X-RateLimit-Usage' => '4,25',
+     *     'Content-Length'    => '2031',
+     *     ...
+     * ]
      *
-     * @link https://github.com/iamstuartwilson/strava
+     * Access with the `getResponseHeader()` or `getResponseHeaders()` methods.
+     *
+     * @var array
      */
+    protected $responseHeaders = array();
 
-    class StravaApi
+    protected $apiUrl;
+    protected $authUrl;
+    protected $clientId;
+    protected $clientSecret;
+
+    private $accessToken;
+    private $CURL_verify_peer = true;
+
+    /**
+     * Sets up the class with the $clientId and $clientSecret
+     *
+     * @param int $clientId
+     * @param string $clientSecret
+     */
+    public function __construct($clientId = 1, $clientSecret = '')
     {
-        const BASE_URL = 'https://www.strava.com/';
+        $this->clientId = $clientId;
+        $this->clientSecret = $clientSecret;
+        $this->apiUrl = self::BASE_URL . 'api/v3/';
+        $this->authUrl = self::BASE_URL . 'oauth/';
+    }
 
-        public $lastRequest;
-        public $lastRequestData;
-        public $lastRequestInfo;
+    /**
+     * Returns the complete list of response headers.
+     *
+     * @return array
+     */
+    public function getResponseHeaders()
+    {
+        return $this->responseHeaders;
+    }
 
-        /**
-         * Stores the HTTP headers from the last API response, e. g.:
-         *
-         * [
-         *     'Cache-Control'     => 'max-age=0, private, must-revalidate',
-         *     'X-RateLimit-Limit' => '600,30000',
-         *     'X-RateLimit-Usage' => '4,25',
-         *     'Content-Length'    => '2031',
-         *     ...
-         * ]
-         *
-         * Access with the `getResponseHeader()` or `getResponseHeaders()` methods.
-         *
-         * @var array
-         */
-        protected $responseHeaders = array();
-
-        protected $apiUrl;
-        protected $authUrl;
-        protected $clientId;
-        protected $clientSecret;
-
-        private $accessToken;
-
-        /**
-         * Sets up the class with the $clientId and $clientSecret
-         *
-         * @param int    $clientId
-         * @param string $clientSecret
-         */
-        public function __construct($clientId = 1, $clientSecret = '')
-        {
-            $this->clientId     = $clientId;
-            $this->clientSecret = $clientSecret;
-            $this->apiUrl       = self::BASE_URL . 'api/v3/';
-            $this->authUrl      = self::BASE_URL . 'oauth/';
+    /**
+     * @param string $header
+     *
+     * @return string
+     */
+    public function getResponseHeader($header)
+    {
+        if (!isset($this->responseHeaders[$header])) {
+            throw new \InvalidArgumentException('Header does not exist');
         }
 
-        /**
-         * Returns the complete list of response headers.
-         *
-         * @return array
-         */
-        public function getResponseHeaders()
-        {
-            return $this->responseHeaders;
+        return $this->responseHeaders[$header];
+    }
+
+    /**
+     * Creates authentication URL for your app
+     *
+     * @param string $redirect
+     * @param string $approvalPrompt
+     * @param string $scope
+     * @param string $state
+     *
+     * @link http://strava.github.io/api/v3/oauth/#get-authorize
+     *
+     * @return string
+     */
+    public function authenticationUrl($redirect, $approvalPrompt = 'auto', $scope = null, $state = null)
+    {
+        $parameters = array(
+            'client_id' => $this->clientId,
+            'redirect_uri' => $redirect,
+            'response_type' => 'code',
+            'approval_prompt' => $approvalPrompt,
+            'state' => $state,
+        );
+
+        if (!is_null($scope)) {
+            $parameters['scope'] = $scope;
         }
 
-        /**
-         * @param string $header
-         *
-         * @return string
-         */
-        public function getResponseHeader($header)
-        {
-            if (! isset($this->responseHeaders[$header])) {
-                throw new \InvalidArgumentException('Header does not exist');
+        return $this->parseGet(
+            $this->authUrl . 'authorize',
+            $parameters
+        );
+    }
+
+    /**
+     * Appends query array onto URL
+     *
+     * @param string $url
+     * @param array $query
+     *
+     * @return string
+     */
+    protected function parseGet($url, $query)
+    {
+        $append = strpos($url, '?') === false ? '?' : '&';
+
+        return $url . $append . http_build_query($query);
+    }
+
+    /**
+     * Authenticates token returned from API
+     *
+     * @param string $code
+     *
+     * @link http://strava.github.io/api/v3/oauth/#post-token
+     *
+     * @return string
+     */
+    public function tokenExchange($code)
+    {
+        $parameters = array(
+            'client_id' => $this->clientId,
+            'client_secret' => $this->clientSecret,
+            'code' => $code,
+        );
+
+        return $this->request(
+            $this->authUrl . 'token',
+            $parameters
+        );
+    }
+
+    /**
+     * Makes HTTP Request to the API
+     *
+     * @param string $url
+     * @param array $parameters
+     * @param bool|string $request the request method, default is POST
+     *
+     * @return mixed
+     * @throws \Exception
+     */
+    protected function request($url, $parameters = array(), $request = false)
+    {
+        $this->lastRequest = $url;
+        $this->lastRequestData = $parameters;
+        $this->responseHeaders = array();
+
+        $curl = curl_init($url);
+
+        $curlOptions = array(
+            CURLOPT_SSL_VERIFYPEER => $this->CURL_verify_peer,
+            CURLOPT_REFERER => $url,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_HEADERFUNCTION => array($this, 'parseHeader'),
+        );
+
+        if (!empty($parameters) || !empty($request)) {
+            if (!empty($request)) {
+                $curlOptions[CURLOPT_CUSTOMREQUEST] = $request;
+                $parameters = http_build_query($parameters);
+            } else {
+                $curlOptions[CURLOPT_POST] = true;
             }
 
-            return $this->responseHeaders[$header];
+            $curlOptions[CURLOPT_POSTFIELDS] = $parameters;
         }
 
-        /**
-         * Appends query array onto URL
-         *
-         * @param string $url
-         * @param array  $query
-         *
-         * @return string
-         */
-        protected function parseGet($url, $query)
-        {
-            $append = strpos($url, '?') === false ? '?' : '&';
+        curl_setopt_array($curl, $curlOptions);
 
-            return $url . $append . http_build_query($query);
-        }
+        $response = curl_exec($curl);
+        $error = curl_error($curl);
 
-        /**
-         * Parses JSON as PHP object
-         *
-         * @param string $response
-         *
-         * @return object
-         */
-        protected function parseResponse($response)
-        {
-            return json_decode($response);
-        }
+        $this->lastRequestInfo = curl_getinfo($curl);
 
-        /**
-         * Makes HTTP Request to the API
-         *
-         * @param string $url
-         * @param array $parameters
-         * @param bool|string $request the request method, default is POST
-         *
-         * @return mixed
-         * @throws \Exception
-         */
-        protected function request($url, $parameters = array(), $request = false)
-        {
-            $this->lastRequest = $url;
-            $this->lastRequestData = $parameters;
-            $this->responseHeaders = array();
+        curl_close($curl);
 
-            $curl = curl_init($url);
-
-            $curlOptions = array(
-                CURLOPT_SSL_VERIFYPEER => false,
-                CURLOPT_REFERER        => $url,
-                CURLOPT_RETURNTRANSFER => true,
-                CURLOPT_HEADERFUNCTION => array($this, 'parseHeader'),
-            );
-
-            if (! empty($parameters) || ! empty($request)) {
-                if (! empty($request)) {
-                    $curlOptions[ CURLOPT_CUSTOMREQUEST ] = $request;
-                    $parameters = http_build_query($parameters);
-                } else {
-                    $curlOptions[ CURLOPT_POST ] = true;
-                }
-
-                $curlOptions[ CURLOPT_POSTFIELDS ] = $parameters;
+        if (!empty($error)) {
+            if ($this->CURL_verify_peer === true){
+                $this->CURL_verify_peer = false;
+                return $this->request($url, $parameters, $request);
             }
 
-            curl_setopt_array($curl, $curlOptions);
-
-            $response = curl_exec($curl);
-            $error    = curl_error($curl);
-
-            $this->lastRequestInfo = curl_getinfo($curl);
-
-            curl_close($curl);
-
-            if (! empty($error)) {
-                throw new \Exception($error);
-            }
-
-            return $this->parseResponse($response);
+            throw new \Exception($error);
         }
 
-        /**
-         * Creates authentication URL for your app
-         *
-         * @param string $redirect
-         * @param string $approvalPrompt
-         * @param string $scope
-         * @param string $state
-         *
-         * @link http://strava.github.io/api/v3/oauth/#get-authorize
-         *
-         * @return string
-         */
-        public function authenticationUrl($redirect, $approvalPrompt = 'auto', $scope = null, $state = null)
-        {
-            $parameters = array(
-                'client_id'       => $this->clientId,
-                'redirect_uri'    => $redirect,
-                'response_type'   => 'code',
-                'approval_prompt' => $approvalPrompt,
-                'state'           => $state,
-            );
+        return $this->parseResponse($response);
+    }
 
-            if (! is_null($scope)) {
-                $parameters['scope'] = $scope;
-            }
+    /**
+     * Parses JSON as PHP object
+     *
+     * @param string $response
+     *
+     * @return object
+     */
+    protected function parseResponse($response)
+    {
+        return json_decode($response);
+    }
 
-            return $this->parseGet(
-                $this->authUrl . 'authorize',
-                $parameters
-            );
+    /**
+     * Deauthorises application
+     *
+     * @link http://strava.github.io/api/v3/oauth/#deauthorize
+     *
+     * @return string
+     */
+    public function deauthorize()
+    {
+        return $this->request(
+            $this->authUrl . 'deauthorize',
+            $this->generateParameters(array())
+        );
+    }
+
+    /**
+     * Adds access token to paramters sent to API
+     *
+     * @param  array $parameters
+     *
+     * @return array
+     */
+    protected function generateParameters($parameters)
+    {
+        return array_merge(
+            $parameters,
+            array('access_token' => $this->accessToken)
+        );
+    }
+
+    /**
+     * Sets the access token used to authenticate API requests
+     *
+     * @param string $token
+     *
+     * @return string
+     */
+    public function setAccessToken($token)
+    {
+        return $this->accessToken = $token;
+    }
+
+    /**
+     * Sends GET request to specified API endpoint
+     *
+     * @param string $request
+     * @param array $parameters
+     *
+     * @example http://strava.github.io/api/v3/athlete/#koms
+     *
+     * @return string
+     */
+    public function get($request, $parameters = array())
+    {
+        $parameters = $this->generateParameters($parameters);
+        $requestUrl = $this->parseGet($this->getAbsoluteUrl($request), $parameters);
+
+        return $this->request($requestUrl);
+    }
+
+    /**
+     * Checks the given request string and returns the absolute URL to make
+     * the necessary API call
+     *
+     * @param string $request
+     *
+     * @return string
+     */
+    protected function getAbsoluteUrl($request)
+    {
+        $request = ltrim($request);
+
+        if (strpos($request, 'http') === 0) {
+            return $request;
         }
 
-        /**
-         * Authenticates token returned from API
-         *
-         * @param string $code
-         *
-         * @link http://strava.github.io/api/v3/oauth/#post-token
-         *
-         * @return string
-         */
-        public function tokenExchange($code)
-        {
-            $parameters = array(
-                'client_id'     => $this->clientId,
-                'client_secret' => $this->clientSecret,
-                'code'          => $code,
-            );
+        return $this->apiUrl . $request;
+    }
 
-            return $this->request(
-                $this->authUrl . 'token',
-                $parameters
-            );
-        }
+    /**
+     * Sends PUT request to specified API endpoint
+     *
+     * @param string $request
+     * @param array $parameters
+     *
+     * @example http://strava.github.io/api/v3/athlete/#update
+     *
+     * @return string
+     */
+    public function put($request, $parameters = array())
+    {
+        return $this->request(
+            $this->getAbsoluteUrl($request),
+            $this->generateParameters($parameters),
+            'PUT'
+        );
+    }
 
-        /**
-         * Deauthorises application
-         *
-         * @link http://strava.github.io/api/v3/oauth/#deauthorize
-         *
-         * @return string
-         */
-        public function deauthorize()
-        {
-            return $this->request(
-                $this->authUrl . 'deauthorize',
-                $this->generateParameters(array())
-            );
-        }
+    /**
+     * Sends POST request to specified API endpoint
+     *
+     * @param string $request
+     * @param array $parameters
+     *
+     * @example http://strava.github.io/api/v3/activities/#create
+     *
+     * @return string
+     */
+    public function post($request, $parameters = array())
+    {
+        return $this->request(
+            $this->getAbsoluteUrl($request),
+            $this->generateParameters($parameters)
+        );
+    }
 
-        /**
-         * Sets the access token used to authenticate API requests
-         *
-         * @param string $token
-         *
-         * @return string
-         */
-        public function setAccessToken($token)
-        {
-            return $this->accessToken = $token;
-        }
+    /**
+     * Sends DELETE request to specified API endpoint
+     *
+     * @param string $request
+     * @param array $parameters
+     *
+     * @example http://strava.github.io/api/v3/activities/#delete
+     *
+     * @return string
+     */
+    public function delete($request, $parameters = array())
+    {
+        return $this->request(
+            $this->getAbsoluteUrl($request),
+            $this->generateParameters($parameters),
+            'DELETE'
+        );
+    }
 
-        /**
-         * Sends GET request to specified API endpoint
-         *
-         * @param string $request
-         * @param array  $parameters
-         *
-         * @example http://strava.github.io/api/v3/athlete/#koms
-         *
-         * @return string
-         */
-        public function get($request, $parameters = array())
-        {
-            $parameters = $this->generateParameters($parameters);
-            $requestUrl = $this->parseGet($this->getAbsoluteUrl($request), $parameters);
+    /**
+     * Parses the header lines into the $responseHeaders attribute
+     *
+     * Skips the first header line (HTTP response status) and the last header
+     * line (empty).
+     *
+     * @param resource $curl
+     * @param string $headerLine
+     *
+     * @return int length of the currently parsed header line in bytes
+     */
+    protected function parseHeader($curl, $headerLine)
+    {
+        $size = strlen($headerLine);
+        $trimmed = trim($headerLine);
 
-            return $this->request($requestUrl);
-        }
-
-        /**
-         * Sends PUT request to specified API endpoint
-         *
-         * @param string $request
-         * @param array  $parameters
-         *
-         * @example http://strava.github.io/api/v3/athlete/#update
-         *
-         * @return string
-         */
-        public function put($request, $parameters = array())
-        {
-            return $this->request(
-                $this->getAbsoluteUrl($request),
-                $this->generateParameters($parameters),
-                'PUT'
-            );
-        }
-
-        /**
-         * Sends POST request to specified API endpoint
-         *
-         * @param string $request
-         * @param array  $parameters
-         *
-         * @example http://strava.github.io/api/v3/activities/#create
-         *
-         * @return string
-         */
-        public function post($request, $parameters = array())
-        {
-            return $this->request(
-                $this->getAbsoluteUrl($request),
-                $this->generateParameters($parameters)
-            );
-        }
-
-        /**
-         * Sends DELETE request to specified API endpoint
-         *
-         * @param string $request
-         * @param array  $parameters
-         *
-         * @example http://strava.github.io/api/v3/activities/#delete
-         *
-         * @return string
-         */
-        public function delete($request, $parameters = array())
-        {
-            return $this->request(
-                $this->getAbsoluteUrl($request),
-                $this->generateParameters($parameters),
-                'DELETE'
-            );
-        }
-
-        /**
-         * Adds access token to paramters sent to API
-         *
-         * @param  array $parameters
-         *
-         * @return array
-         */
-        protected function generateParameters($parameters)
-        {
-            return array_merge(
-                $parameters,
-                array( 'access_token' => $this->accessToken )
-            );
-        }
-
-        /**
-         * Parses the header lines into the $responseHeaders attribute
-         *
-         * Skips the first header line (HTTP response status) and the last header
-         * line (empty).
-         *
-         * @param resource $curl
-         * @param string $headerLine
-         *
-         * @return int length of the currently parsed header line in bytes
-         */
-        protected function parseHeader($curl, $headerLine)
-        {
-            $size    = strlen($headerLine);
-            $trimmed = trim($headerLine);
-
-            // skip empty line(s)
-            if (empty($trimmed)) {
-                return $size;
-            }
-
-            // skip first header line (HTTP status code)
-            if (strpos($trimmed, 'HTTP/') === 0) {
-                return $size;
-            }
-
-            $parts = explode(':', $headerLine);
-            $key   = array_shift($parts);
-            $value = implode(':', $parts);
-
-            $this->responseHeaders[$key] = trim($value);
-
+        // skip empty line(s)
+        if (empty($trimmed)) {
             return $size;
         }
 
-        /**
-         * Checks the given request string and returns the absolute URL to make
-         * the necessary API call
-         *
-         * @param string $request
-         *
-         * @return string
-         */
-        protected function getAbsoluteUrl($request)
-        {
-            $request = ltrim($request);
-
-            if (strpos($request, 'http') === 0) {
-                return $request;
-            }
-
-            return $this->apiUrl . $request;
+        // skip first header line (HTTP status code)
+        if (strpos($trimmed, 'HTTP/') === 0) {
+            return $size;
         }
+
+        $parts = explode(':', $headerLine);
+        $key = array_shift($parts);
+        $value = implode(':', $parts);
+
+        $this->responseHeaders[$key] = trim($value);
+
+        return $size;
     }
+}
