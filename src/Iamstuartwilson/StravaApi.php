@@ -41,6 +41,8 @@
         protected $clientSecret;
 
         private $accessToken;
+        private $refreshToken;
+        private $expiresAt; 
 
         /**
          * Sets up the class with the $clientId and $clientSecret
@@ -122,6 +124,10 @@
             $this->lastRequest = $url;
             $this->lastRequestData = $parameters;
             $this->responseHeaders = array();
+            
+            if (isset($this->expiresAt) && ($this->expiresAt - time() < 3600)) {
+                throw new \Exception('Strava access token needs to be refreshed');
+            }
 
             $curl = curl_init($url);
 
@@ -206,6 +212,29 @@
                 'client_id'     => $this->clientId,
                 'client_secret' => $this->clientSecret,
                 'code'          => $code,
+                'grant_type'    => 'authorization_code'
+            );
+
+            return $this->request(
+                $this->authUrl . 'token',
+                $parameters
+            );
+        }
+
+        /**
+         * Refresh expired access tokens
+         *
+         * @link https://developers.strava.com/docs/authentication/
+         *
+         * @return string
+         */
+        public function tokenExchangeRefresh()
+        {
+            $parameters = array(
+                'client_id'     => $this->clientId,
+                'client_secret' => $this->clientSecret,
+                'refresh_token' => $this->refresh_token,
+                'grant_type'    => 'refresh_token'
             );
 
             return $this->request(
@@ -233,11 +262,19 @@
          * Sets the access token used to authenticate API requests
          *
          * @param string $token
+         * @param string $refreshToken
+         * @param int $expiresAt
          *
          * @return string
          */
-        public function setAccessToken($token)
+        public function setAccessToken($token, $refreshToken = null, $expiresAt = null)
         {
+            if (isset($refreshToken)) {
+                $this->refreshToken = $refreshToken;
+            }
+            if (isset($expiresAt)) {
+                $this->expiresAt = $expiresAt;
+            }
             return $this->accessToken = $token;
         }
 
