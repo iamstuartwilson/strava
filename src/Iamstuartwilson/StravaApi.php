@@ -233,7 +233,7 @@
             $parameters = array(
                 'client_id'     => $this->clientId,
                 'client_secret' => $this->clientSecret,
-                'refresh_token' => $this->refresh_token,
+                'refresh_token' => $this->refreshToken,
                 'grant_type'    => 'refresh_token'
             );
 
