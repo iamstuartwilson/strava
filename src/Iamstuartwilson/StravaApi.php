@@ -230,6 +230,9 @@
          */
         public function tokenExchangeRefresh()
         {
+            if (! isset($this->refreshToken)) {
+                return null;
+            }
             $parameters = array(
                 'client_id'     => $this->clientId,
                 'client_secret' => $this->clientSecret,
