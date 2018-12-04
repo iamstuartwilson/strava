@@ -226,7 +226,7 @@
          *
          * @link https://developers.strava.com/docs/authentication/
          *
-         * @return string
+         * @return mixed
          */
         public function tokenExchangeRefresh()
         {
@@ -277,7 +277,11 @@
             }
             if (isset($expiresAt)) {
                 $this->expiresAt = $expiresAt;
+                if ($this->expiresAt - time() < 3600) {
+                    throw new \Exception('Strava access token needs to be refreshed');
+                }
             }
+            
             return $this->accessToken = $token;
         }
 
