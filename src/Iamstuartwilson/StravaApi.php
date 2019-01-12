@@ -383,4 +383,28 @@
 
             return $this->apiUrl . $request;
         }
+
+        /**
+         * Refresh expired access tokens
+         *
+         * @link https://developers.strava.com/docs/authentication/#refresh-expired-access-tokens
+         *
+         * @param string $refresh_token
+         *
+         * @return string
+         */
+        public function refreshExpiredAccessTokens($refresh_token)
+        {
+            $parameters = array(
+                'client_id'     => $this->clientId,
+                'client_secret' => $this->clientSecret,
+                'grant_type' => 'refresh_token',
+                'refresh_token' => $refresh_token
+            );
+
+            return $this->request(
+                $this->authUrl . 'token',
+                $parameters
+                );
+        }
     }
