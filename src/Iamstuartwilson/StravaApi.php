@@ -12,7 +12,7 @@
 
     class StravaApi
     {
-        const BASE_URL = 'https://www.strava.com/';
+        const BASE_URL = 'https://www.strava.com';
 
         public $lastRequest;
         public $lastRequestData;
@@ -54,8 +54,8 @@
         {
             $this->clientId     = $clientId;
             $this->clientSecret = $clientSecret;
-            $this->apiUrl       = self::BASE_URL . 'api/v3/';
-            $this->authUrl      = self::BASE_URL . 'oauth/';
+            $this->apiUrl       = self::BASE_URL . '/api/v3/';
+            $this->authUrl      = self::BASE_URL . '/oauth/';
         }
 
         /**
