@@ -125,7 +125,7 @@
             $this->lastRequestData = $parameters;
             $this->responseHeaders = array();
 
-            if (strpos($url, 'token') !== false && isset($this->expiresAt) && ($this->expiresAt - time() < 3600)) {
+            if (strpos($url, 'token') === false && isset($this->expiresAt) && ($this->expiresAt - time() < 3600)) {
                 throw new \Exception('Strava access token needs to be refreshed');
             }
 
