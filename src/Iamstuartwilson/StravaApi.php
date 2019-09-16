@@ -14,6 +14,11 @@
     {
         const BASE_URL = 'https://www.strava.com';
 
+        /**
+         * If the access token expires in less than 3600 seconds, a refresh is required.
+         */
+        const ACCESS_TOKEN_MINIMUM_VALIDITY = 3600;
+
         public $lastRequest;
         public $lastRequestData;
         public $lastRequestInfo;
@@ -125,8 +130,8 @@
             $this->lastRequestData = $parameters;
             $this->responseHeaders = array();
 
-            if (strpos($url, 'token') === false && isset($this->expiresAt) && ($this->expiresAt - time() < 3600)) {
-                throw new \Exception('Strava access token needs to be refreshed');
+            if (strpos($url, '/oauth/token') === false && $this->isTokenRefreshNeeded()) {
+                throw new \RuntimeException('Strava access token needs to be refreshed');
             }
 
             $curl = curl_init($url);
@@ -277,8 +282,8 @@
             }
             if (isset($expiresAt)) {
                 $this->expiresAt = $expiresAt;
-                if ($this->expiresAt - time() < 3600) {
-                    throw new \Exception('Strava access token needs to be refreshed');
+                if ($this->isTokenRefreshNeeded()) {
+                    throw new \RuntimeException('Strava access token needs to be refreshed');
                 }
             }
 
@@ -426,5 +431,17 @@
             }
 
             return $this->apiUrl . $request;
+        }
+
+        /**
+         * @return bool
+         */
+        public function isTokenRefreshNeeded()
+        {
+            if (empty($this->expiresAt)) {
+                return false;
+            }
+
+            return $this->expiresAt - time() < self::ACCESS_TOKEN_MINIMUM_VALIDITY;
         }
     }

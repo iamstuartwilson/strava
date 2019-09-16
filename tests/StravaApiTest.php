@@ -1,5 +1,7 @@
 <?php
 
+use Iamstuartwilson\StravaApi;
+
 class StravaApiTest extends \PHPUnit_Framework_TestCase
 {
     /**
@@ -42,5 +44,39 @@ class StravaApiTest extends \PHPUnit_Framework_TestCase
         $url = $this->stravaApi->authenticationUrl('https://example.org/', 'auto', 'read', null);
 
         $this->assertEquals($expected, $url);
+    }
+
+    public function testIfTokenRefreshCheckReturnsTrueIfNoExpiresTimestampIsSet()
+    {
+        $this->stravaApi->setAccessToken('access_token', 'refresh_token', null);
+
+        self::assertFalse($this->stravaApi->isTokenRefreshNeeded());
+    }
+
+    /**
+     * @expectedException \RuntimeException
+     */
+    public function testIfTokenRefreshCheckReturnsTrueIfExpiresTimestampIsInThePast()
+    {
+        $this->stravaApi->setAccessToken('access_token', 'refresh_token', time() - 86400);
+
+        self::assertTrue($this->stravaApi->isTokenRefreshNeeded());
+    }
+
+    /**
+     * @expectedException \RuntimeException
+     */
+    public function testIfTokenRefreshCheckReturnsTrueIfExpiresTimestampIsDueInLessThanOneHour()
+    {
+        $this->stravaApi->setAccessToken('access_token', 'refresh_token', time() + 1800);
+
+        self::assertTrue($this->stravaApi->isTokenRefreshNeeded());
+    }
+
+    public function testIfTokenRefreshCheckReturnsFalseIfExpiresTimestampIsMoreThanOneHourInTheFuture()
+    {
+        $this->stravaApi->setAccessToken('access_token', 'refresh_token', time() + 7200);
+
+        self::assertFalse($this->stravaApi->isTokenRefreshNeeded());
     }
 }
