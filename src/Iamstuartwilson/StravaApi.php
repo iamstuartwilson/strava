@@ -42,7 +42,7 @@
 
         private $accessToken;
         private $refreshToken;
-        private $expiresAt; 
+        private $expiresAt;
 
         /**
          * Sets up the class with the $clientId and $clientSecret
@@ -124,7 +124,7 @@
             $this->lastRequest = $url;
             $this->lastRequestData = $parameters;
             $this->responseHeaders = array();
-            
+
             if (strpos($url, 'token') !== false && isset($this->expiresAt) && ($this->expiresAt - time() < 3600)) {
                 throw new \Exception('Strava access token needs to be refreshed');
             }
@@ -173,7 +173,7 @@
          * @param string $scope
          * @param string $state
          *
-         * @link http://strava.github.io/api/v3/oauth/#get-authorize
+         * @link http://developers.strava.com/docs/authentication/
          *
          * @return string
          */
@@ -202,7 +202,7 @@
          *
          * @param string $code
          *
-         * @link http://strava.github.io/api/v3/oauth/#post-token
+         * @link http://developers.strava.com/docs/authentication/#token-exchange
          *
          * @return string
          */
@@ -224,7 +224,7 @@
         /**
          * Refresh expired access tokens
          *
-         * @link https://developers.strava.com/docs/authentication/
+         * @link https://developers.strava.com/docs/authentication/#refresh-expired-access-tokens
          *
          * @return mixed
          */
@@ -281,7 +281,7 @@
                     throw new \Exception('Strava access token needs to be refreshed');
                 }
             }
-            
+
             return $this->accessToken = $token;
         }
 
