@@ -3,6 +3,23 @@
 All notable changes to `iamstuartwilson/strava` will be documented in this file.
 Updates should follow the [Keep a CHANGELOG](http://keepachangelog.com/) principles.
 
+## [1.4.0] - 2019-09-16
+
+### Added
+
+- Support for Strava's new oAuth2 flow (short-lived access tokens, refresh tokens).
+- Example file which demonstrates how the oAuth2 flow works.
+
+### Changed
+
+- Unified Markdown style in README.
+
+## [1.3.0] - 2017-03-02
+
+### Added
+
+- Possibility to use absolute URL for an endpoint to work with new [webhook functionality](https://developers.strava.com/docs/webhooks/).
+
 ## [1.2.2] - 2016-10-26
 
 ### Added

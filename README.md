@@ -3,30 +3,26 @@
 ![Packagist](https://img.shields.io/packagist/v/iamstuartwilson/strava.svg)
 ![Packagist Downloads](https://img.shields.io/packagist/dt/iamstuartwilson/strava.svg)
 
-StravaApi
-=============
+# StravaApi
 
-The class simply houses methods to help send data to and recieve data from the API. Please read the [API documentation](https://developers.strava.com/docs/reference/) to see what endpoints are available.
+The class simply houses methods to help send data to and receive data from the API. Please read the [API documentation](https://developers.strava.com/docs/reference/) to see what endpoints are available.
 
-*There is currently no file upload support at this time*
+*There is no file upload support at this time.*
 
-Installation
-------------
+## Installation
 
 ### With Composer
 
-```
-$ composer require iamstuartwilson/strava
+``` shell
+composer require iamstuartwilson/strava
 ```
 
-**Or**
-
-Add `iamstuartwilson/strava` to your `composer.json`:
+Or add it manually to your `composer.json`:
 
 ``` json
 {
     "require" : {
-        "iamstuartwilson/strava" : "~1.3"
+        "iamstuartwilson/strava" : "^1.4"
     }
 }
 ```
@@ -35,10 +31,9 @@ Add `iamstuartwilson/strava` to your `composer.json`:
 
 Copy `StravaApi.php` to your project and *require* it in your application as described in the next section.
 
-Getting Started
-------------
+## Getting Started
 
-Include the class and instantiate with your **client_id** and **client_secret** from your [registered app](https://www.strava.com/settings/api):
+Instantiate the class with your **client_id** and **client_secret** from your [registered app](https://www.strava.com/settings/api):
 
 ``` php
 require_once 'StravaApi.php';
@@ -49,34 +44,58 @@ $api = new Iamstuartwilson\StravaApi(
 );
 ```
 
-You will then need to [authenticate](http://strava.github.io/api/v3/oauth/) your strava account by requesting an access code<sup>1</sup>.  You can generate a URL for authentication using the following method:
+If you're just testing endpoints/methods you can skip the authentication flow and just use the access token from your [settings page](https://www.strava.com/settings/api).
+
+You will then need to [authenticate](https://developers.strava.com/docs/authentication/) your strava account by requesting an access code. You can generate a URL for authentication using the following method:
 
 ``` php
 $api->authenticationUrl($redirect, $approvalPrompt = 'auto', $scope = null, $state = null);
 ```
 
-When a code is returned you must then exchange it for an [access token](http://strava.github.io/api/v3/oauth/#post-token) for the authenticated user:
+When a code is returned you must then exchange it for an [access token and a refresh token](http://developers.strava.com/docs/authentication/#token-exchange) for the authenticated user:
 
 ``` php
-$api->tokenExchange($code);
+$result = $api->tokenExchange($code);
 ```
 
-Before making any requests you must set the access token as returned from your token exchange or via your own private token from Strava:
+The token exchange result contains among other data the tokens. You can access them as attributes of the result object:
+
+```php
+$accessToken = $result->access_token;
+$refreshToken = $result->refresh_token;
+$expiresAt = $result->expires_at;
+```
+
+Before making any requests you must set the access and refresh tokens as returned from your token exchange result or via your own private token from Strava:
 
 ``` php
-$api->setAccessToken($accessToken);
+$api->setAccessToken($accessToken, $refreshToken, $expiresAt);
 ```
 
-Example Requests
-------------
+## Example oAuth2 Authentication Flow
 
-Get the most recent 100 KOMs from any athlete
+`examples/oauth-flow.php` demonstrates how the oAuth2 authentication flow works.
+
+1. Choose how to load the `StravaApi.php` – either via Composer autoloader or by manually *requiring* it.
+2. Replace the three config values `CALLBACK_URL`, `STRAVA_API_ID`, and `STRAVA_API_SECRET` at the top of the file
+3. Place the file on your server so that it's accessible at `CALLBACK_URL`
+4. Point your browser to `CALLBACK_URL` and start the authentication flow.
+
+The scripts prints a lot of verbose information so you get an idea on how the Strava oAuth flow works.
+
+## Example Requests
+
+Once successfully authenticated you're able to communicate with Strava's API.
+
+All actions that change Strava contents (`post`, `put`, `delete`) will need the **scope** set to *write* in the authentication flow.
+
+### Get the most recent 100 KOMs from any athlete
 
 ``` php
 $api->get('athletes/:id/koms', ['per_page' => 100]);
 ```
 
-Post a new activity<sup>2</sup>
+### Post a new activity
 
 ``` php
 $api->post('activities', [
@@ -87,34 +106,18 @@ $api->post('activities', [
 ]);
 ```
 
-Update a athlete's weight<sup>2</sup>
+### Update a athlete's weight
 
 ``` php
 $api->put('athlete', ['weight' => 70]);
 ```
 
-Delete an activity<sup>2</sup>
+### Delete an activity
 
 ``` php
 $api->delete('activities/:id');
 ```
 
-### Notes
+## Releases
 
-**1**. The account you register your app will give you an access token, so you can skip this step if you're just testing endpoints/methods.
-
-**2**. These actions will need the **scope** set to *write* when authenticating a user
-
----
-
-Releases
----
-Latest version **1.3.0**
-
-- Adds possibility to use absolute URL for an endpoint to work with new [webhook functionality](https://developers.strava.com/docs/webhooks/).
-
-Previous version **1.2.2**
-
-- Possibility to access the HTTP response headers
-- PHP 7 compatibility
-- Basic PHPUnit test cases for Auth URL generation
+See CHANGELOG.md.

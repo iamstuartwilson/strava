@@ -12,7 +12,12 @@
 
     class StravaApi
     {
-        const BASE_URL = 'https://www.strava.com/';
+        const BASE_URL = 'https://www.strava.com';
+
+        /**
+         * If the access token expires in less than 3600 seconds, a refresh is required.
+         */
+        const ACCESS_TOKEN_MINIMUM_VALIDITY = 3600;
 
         public $lastRequest;
         public $lastRequestData;
@@ -41,6 +46,8 @@
         protected $clientSecret;
 
         private $accessToken;
+        private $refreshToken;
+        private $expiresAt;
 
         /**
          * Sets up the class with the $clientId and $clientSecret
@@ -52,8 +59,8 @@
         {
             $this->clientId     = $clientId;
             $this->clientSecret = $clientSecret;
-            $this->apiUrl       = self::BASE_URL . 'api/v3/';
-            $this->authUrl      = self::BASE_URL . 'oauth/';
+            $this->apiUrl       = self::BASE_URL . '/api/v3/';
+            $this->authUrl      = self::BASE_URL . '/oauth/';
         }
 
         /**
@@ -123,6 +130,10 @@
             $this->lastRequestData = $parameters;
             $this->responseHeaders = array();
 
+            if (strpos($url, '/oauth/token') === false && $this->isTokenRefreshNeeded()) {
+                throw new \RuntimeException('Strava access token needs to be refreshed');
+            }
+
             $curl = curl_init($url);
 
             $curlOptions = array(
@@ -167,7 +178,7 @@
          * @param string $scope
          * @param string $state
          *
-         * @link http://strava.github.io/api/v3/oauth/#get-authorize
+         * @link http://developers.strava.com/docs/authentication/
          *
          * @return string
          */
@@ -196,7 +207,7 @@
          *
          * @param string $code
          *
-         * @link http://strava.github.io/api/v3/oauth/#post-token
+         * @link http://developers.strava.com/docs/authentication/#token-exchange
          *
          * @return string
          */
@@ -206,6 +217,32 @@
                 'client_id'     => $this->clientId,
                 'client_secret' => $this->clientSecret,
                 'code'          => $code,
+                'grant_type'    => 'authorization_code'
+            );
+
+            return $this->request(
+                $this->authUrl . 'token',
+                $parameters
+            );
+        }
+
+        /**
+         * Refresh expired access tokens
+         *
+         * @link https://developers.strava.com/docs/authentication/#refresh-expired-access-tokens
+         *
+         * @return mixed
+         */
+        public function tokenExchangeRefresh()
+        {
+            if (! isset($this->refreshToken)) {
+                return null;
+            }
+            $parameters = array(
+                'client_id'     => $this->clientId,
+                'client_secret' => $this->clientSecret,
+                'refresh_token' => $this->refreshToken,
+                'grant_type'    => 'refresh_token'
             );
 
             return $this->request(
@@ -233,11 +270,23 @@
          * Sets the access token used to authenticate API requests
          *
          * @param string $token
+         * @param string $refreshToken
+         * @param int $expiresAt
          *
          * @return string
          */
-        public function setAccessToken($token)
+        public function setAccessToken($token, $refreshToken = null, $expiresAt = null)
         {
+            if (isset($refreshToken)) {
+                $this->refreshToken = $refreshToken;
+            }
+            if (isset($expiresAt)) {
+                $this->expiresAt = $expiresAt;
+                if ($this->isTokenRefreshNeeded()) {
+                    throw new \RuntimeException('Strava access token needs to be refreshed');
+                }
+            }
+
             return $this->accessToken = $token;
         }
 
@@ -382,5 +431,17 @@
             }
 
             return $this->apiUrl . $request;
+        }
+
+        /**
+         * @return bool
+         */
+        public function isTokenRefreshNeeded()
+        {
+            if (empty($this->expiresAt)) {
+                return false;
+            }
+
+            return $this->expiresAt - time() < self::ACCESS_TOKEN_MINIMUM_VALIDITY;
         }
     }
