@@ -89,10 +89,10 @@ Once successfully authenticated you're able to communicate with Strava's API.
 
 All actions that change Strava contents (`post`, `put`, `delete`) will need the **scope** set to *write* in the authentication flow.
 
-### Get the most recent 100 KOMs from any athlete
+### Get Athlete Stats
 
 ``` php
-$api->get('athletes/:id/koms', ['per_page' => 100]);
+$api->get('athletes/:id/stats');
 ```
 
 ### Post a new activity
