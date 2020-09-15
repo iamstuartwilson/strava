@@ -129,12 +129,6 @@ $api->post(
 $api->put('athlete', ['weight' => 70]);
 ```
 
-### Delete an activity
-
-``` php
-$api->delete('activities/:id');
-```
-
 ## Releases
 
 See [CHANGELOG.md](https://github.com/iamstuartwilson/strava/blob/master/CHANGELOG.md).
