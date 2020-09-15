@@ -95,15 +95,32 @@ All actions that change Strava contents (`post`, `put`, `delete`) will need the 
 $api->get('athletes/:id/stats');
 ```
 
+### List Athlete Activities
+
+Some API endpoints support GET parameters:
+
+``` php
+$api->get(
+    'athlete/activities',
+    [
+        'page' => 2,
+        'per_page' => 10,
+    ]
+);
+```
+
 ### Post a new activity
 
 ``` php
-$api->post('activities', [
-    'name'             => 'API Test',
-    'type'             => 'Ride',
-    'start_date_local' => date( 'Y-m-d\TH:i:s\Z'),
-    'elapsed_time'     => 3600
-]);
+$api->post(
+    'activities', 
+    [
+        'name' => 'API Test',
+        'type' => 'Ride',
+        'start_date_local' => date('Y-m-d\TH:i:s\Z'),
+        'elapsed_time' => 3600,
+    ]
+);
 ```
 
 ### Update a athlete's weight
@@ -120,4 +137,4 @@ $api->delete('activities/:id');
 
 ## Releases
 
-See CHANGELOG.md.
+See [CHANGELOG.md](https://github.com/iamstuartwilson/strava/blob/master/CHANGELOG.md).
